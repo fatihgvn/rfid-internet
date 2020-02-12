@@ -44,45 +44,40 @@ def getCards(id):
 # INSERT INTO cards (first_name, last_name, cardId, state) 
 # VALUES ("Furkan","Keleşoğlu", "22AF71CD", 1);
 # ''')
+try:
+    while True:
+        # Wait for a connection
+        print('waiting for a connection')
+        connection, client_address = sock.accept()
+        try:
+            print('connection from', client_address)
 
-while True:
-    # Wait for a connection
-    print('waiting for a connection')
-    connection, client_address = sock.accept()
-    try:
-        print('connection from', client_address)
+            # Receive the data in small chunks and retransmit it
+            while True:
+                data = connection.recv(16)
+                if data:
+                    userState = 0
+                    cardId = data.decode("utf-8").rstrip()
+                    print('received {!r}'.format(cardId))
+                    if(cardIdregex.match(cardId)):
+                        user = getCards(cardId)
 
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(16)
-            if data:
-                userState = 0
-                cardId = data.decode("utf-8").rstrip()
-                print('received {!r}'.format(cardId))
-                if(cardIdregex.match(cardId)):
-                    user = getCards(cardId)
+                        userState = user[4]
+                        proc = "geçiş izni verilmedi" if(user[4] == 0) else "geçiş izni verildi"
+                        addLogSql("[{0}] {1} {2} isimli kart sahibine {3}".format(cardId,user[1],user[2],proc))
 
-                    userState = user[4]
-                    proc = "geçiş izni verilmedi" if(user[4] == 0) else "geçiş izni verildi"
-                    addLogSql("[{0}] {1} {2} isimli kart sahibine {3}".format(cardId,user[1],user[2],proc))
-
+                    else:
+                        addLogSql("[{0}] kart id'si tanımlamanın dışarısında kaldığı için kabul edilmedi".format(cardId))
+                        
+                    connection.sendall("{0}".format(userState).encode())
                 else:
-                    addLogSql("[{0}] kart id'si tanımlamanın dışarısında kaldığı için kabul edilmedi".format(cardId))
-                    
-                connection.sendall("{0}".format(userState).encode())
-            else:
-                break
+                    break
+        except Exception as ex:
+            print(ex)
 
-    except:
-        # Clean up the connection
-        connection.close()
+finally:
+    # Clean up the connection
+    connection.close()
 
-        conn.close()
-
-
-    finally:
-        # Clean up the connection
-        connection.close()
-
-        conn.close()
+    conn.close()
 
