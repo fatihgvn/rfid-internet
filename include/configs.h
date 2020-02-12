@@ -5,6 +5,9 @@
 
     #include <Arduino.h>
 
+    #define SS_PIN D4 //SDA Pini
+    #define RST_PIN D3
+
     #define SerialBoud 9600
 
     // seri monitör iletişimini açmak için SerialDebugger tanımlamasını
