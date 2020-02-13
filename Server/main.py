@@ -61,11 +61,13 @@ try:
                     print('received {!r}'.format(cardId))
                     if(cardIdregex.match(cardId)):
                         user = getCards(cardId)
-
-                        userState = user[4]
-                        proc = "geçiş izni verilmedi" if(user[4] == 0) else "geçiş izni verildi"
-                        addLogSql("[{0}] {1} {2} isimli kart sahibine {3}".format(cardId,user[1],user[2],proc))
-
+                        if(user):
+                            userState = user[4]
+                            proc = "geçiş izni verilmedi" if(user[4] == 0) else "geçiş izni verildi"
+                            addLogSql("[{0}] {1} {2} isimli kart sahibine {3}".format(cardId,user[1],user[2],proc))
+                        else:
+                            userState = 0
+                            addLogSql("[{0}] kar id'sine sahip kullanıcı bulunamadı".format(cardId))
                     else:
                         addLogSql("[{0}] kart id'si tanımlamanın dışarısında kaldığı için kabul edilmedi".format(cardId))
                         
