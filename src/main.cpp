@@ -1,15 +1,15 @@
 #include "configs.h"
 
-int alarmPin = D8;
-int yesilLed = D1;
-int kirmiziLed = D2;
-
 #include <SPI.h>
 #include <MFRC522.h>
+#include <ESP8266WiFi.h>
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   
 int statuss = 0;
 int out = 0;
+WiFiClient client; // TCP bağlantı için obje
+
+bool checkCard(String);
 
 void setup() {
   // put your setup code here, to run once:
@@ -17,75 +17,119 @@ void setup() {
   pinMode(yesilLed, OUTPUT);
   pinMode(kirmiziLed, OUTPUT);
   
-  Serial.begin(9600);   
+  serialbegin();
   SPI.begin();      
-  mfrc522.PCD_Init(); 
+  mfrc522.PCD_Init();   
+
+  
+  sserialn();
+  sserialn();
+  sserial("Connecting to ");
+  sserialn(STASSID);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(STASSID, STAPSK);
+
+   
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    sserial(".");
+  }
+
+  sserialn();
+  sserialn("WiFi connected");
+  sserial("IP address: ");
+  sserialn(WiFi.localIP());
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  // Yeni kartlari tara
-  if ( ! mfrc522.PICC_IsNewCardPresent()) 
+
+  if (
+    mfrc522.PICC_IsNewCardPresent() // Yeni kartlari tara
+    && mfrc522.PICC_ReadCardSerial() // Kart okundu ise
+    ) 
   {
-    return;
-  }
-  // Kart okundu ise
-  if ( ! mfrc522.PICC_ReadCardSerial()) 
-  {
-    return;
-  }
-  //Kartin UID'sini oku ve seri porta yaz
-  Serial.println();
-  Serial.print(" UID etiketi :");
-  String content= "";
-  byte letter;
-  for (byte i = 0; i < mfrc522.uid.size; i++) 
-  {
-     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-     Serial.print(mfrc522.uid.uidByte[i], HEX);
-     content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
-     content.concat(String(mfrc522.uid.uidByte[i], HEX));
-  }
-  content.toUpperCase();
-  Serial.println();
-  if (content.substring(1) == "DB FA C0 22") // Bu UID degerini tanimlamak istediginiz kartin degeri ile degistirin.
-  {
-    Serial.println(" Giris Basarili ! ");
-    Serial.println(" Hos Geldiniz, Sn. Cirak Dergi Okuyucusu. ");
-     digitalWrite(alarmPin, HIGH);
-     digitalWrite(yesilLed, HIGH);
-      delay(500);
-    digitalWrite(alarmPin, LOW);
-    digitalWrite(yesilLed, LOW);
-    delay(1000);
-    Serial.println(" Eglencenize bakin :) ");
-    Serial.println();
-    statuss = 1;
-   
-  }
-  
-  else   {
-    Serial.println(" Kart Tanimlanmadi ! ");
-    Serial.println(" Giris Basarisiz. ");
-    digitalWrite(alarmPin, HIGH);
-    digitalWrite(kirmiziLed, HIGH);
-      delay(100);
-    digitalWrite(alarmPin, LOW);
-    digitalWrite(kirmiziLed, LOW);
-      delay(100);
-    digitalWrite(alarmPin, HIGH);
-    digitalWrite(kirmiziLed, HIGH);
-      delay(100);
-    digitalWrite(alarmPin, LOW);
-    digitalWrite(kirmiziLed, LOW);
-      delay(100);
-    digitalWrite(alarmPin, HIGH);
-    digitalWrite(kirmiziLed, HIGH);
-      delay(100);
-    digitalWrite(alarmPin, LOW);
-    digitalWrite(kirmiziLed, LOW);
-      delay(100);
+    String card= "";
+
+
+    // kartı oku
+    for (byte i = 0; i < mfrc522.uid.size; i++)
+      card.concat(String(mfrc522.uid.uidByte[i], HEX));
     
-    delay(3000);
+    card.toUpperCase();
+    sserialn();
+
+    //Kartin UID'sini seri porta yaz
+    sserialn();
+    sserial(" UID etiketi :");
+    sserialn(card);
+
+    if(checkCard(card)){
+      sserialn("Giris Basarili!");
+
+      digitalWrite(yesilLed, HIGH);
+
+      digitalWrite(alarmPin, HIGH);
+      delay(150);
+      digitalWrite(alarmPin, LOW);
+      delay(200);
+      digitalWrite(alarmPin, HIGH);
+      delay(200);
+      digitalWrite(alarmPin, LOW);
+      delay(1000);
+
+      digitalWrite(yesilLed, LOW);
+    }else{
+      sserialn("Hatalı kart!");
+      digitalWrite(kirmiziLed, HIGH);
+
+      digitalWrite(alarmPin, HIGH);
+      delay(600);
+      digitalWrite(alarmPin, LOW);
+      delay(1000);
+
+      digitalWrite(kirmiziLed, LOW);
+    }
   }
+}
+
+bool checkCard(String card){
+  sserial("connecting to ");
+  sserial(SERVER);
+  sserial(':');
+  sserialn(SERVER_PORT);
+  bool ret = false;
+
+  // Use WiFiClient class to create TCP connections
+  if (!client.connect(SERVER, SERVER_PORT)) {
+    sserialn("connection failed");
+    ret = false;
+  }else{
+    client.println(card);
+    char ch = '\0';
+    long timecounter = millis();
+
+    while (client.available() && millis()-timecounter < TIMEOUT)
+      ch = static_cast<char>(client.read());
+    
+    if(millis() - timecounter > TIMEOUT){
+      // server yanıt vermedi hatası!
+
+      digitalWrite(sariLed, HIGH);
+      digitalWrite(kirmiziLed, HIGH);
+      digitalWrite(alarmPin, HIGH);
+      delay(1000);
+      digitalWrite(sariLed, LOW);
+      digitalWrite(kirmiziLed, LOW);
+      digitalWrite(alarmPin, LOW);
+
+      ret = false;
+    }else{
+      if(ch == '1') ret = true;
+      else ret = false;
+    }
+  }
+
+  return ret;
 }

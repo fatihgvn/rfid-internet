@@ -5,9 +5,25 @@
 
     #include <Arduino.h>
 
-    #define SS_PIN D4 //SDA Pini
-    #define RST_PIN D3
+    #define SS_PIN          D4 //SDA Pini
+    #define RST_PIN         D3
 
+    #define alarmPin        D8
+    #define yesilLed        D1
+    #define kirmiziLed      D2
+    #define sariLed         D5
+
+    // wifi ayarları
+    #ifndef STASSID
+    #define STASSID "kelesoglu" // wifi ismi
+    #define STAPSK  "94499001" // parola
+    #endif
+
+    #define SERVER "servhodein.com"
+    #define SERVER_PORT 48578
+    #define TIMEOUT 2000
+
+    // Serial bağlantı ayarları
     #define SerialBoud 9600
 
     // seri monitör iletişimini açmak için SerialDebugger tanımlamasını
