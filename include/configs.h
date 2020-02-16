@@ -8,10 +8,10 @@
     #define SS_PIN          D4 //SDA Pini
     #define RST_PIN         D3
 
-    #define alarmPin        D8
+    #define buzzerPin       D8
     #define yesilLed        D1
     #define kirmiziLed      D2
-    #define sariLed         D5
+    #define wifiLed         D0
 
     // wifi ayarları
     #ifndef STASSID
