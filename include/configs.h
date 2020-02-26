@@ -15,13 +15,13 @@
 
     // wifi ayarları
     #ifndef STASSID
-    #define STASSID "kelesoglu" // wifi ismi
-    #define STAPSK  "94499001" // parola
+    #define STASSID "GlobalMedia" // wifi ismi
+    #define STAPSK  "G11globala16" // parola
     #endif
 
-    #define SERVER "servhodein.com"
+    #define SERVER "192.168.1.44"
     #define SERVER_PORT 48578
-    #define TIMEOUT 2000
+    #define TIMEOUT 5000
 
     // Serial bağlantı ayarları
     #define SerialBoud 9600

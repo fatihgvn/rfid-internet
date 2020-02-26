@@ -148,7 +148,7 @@ void printHex(byte *buffer, byte bufferSize)
   // wait for data to be available
   unsigned long timeout = millis();
   while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
+    if (millis() - timeout > TIMEOUT) {
       Serial.println(">>> Client Cevap vermekte gecikti....!");
       client.stop();
       delay(600);
