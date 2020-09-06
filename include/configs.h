@@ -5,6 +5,8 @@
 
     #include <Arduino.h>
 
+    #define DEVICE_ID       0
+
     #define SS_PIN          D4 //SDA Pini
     #define RST_PIN         D3
 
@@ -15,31 +17,15 @@
 
     // wifi ayarları
     #ifndef STASSID
-    #define STASSID "GlobalMedia" // wifi ismi
-    #define STAPSK  "G11globala16" // parola
+    #define STASSID "zemin kat" // wifi ismi
+    #define STAPSK  "genclik55" // parola
     #endif
 
-    #define SERVER "192.168.1.44"
+    #define SERVER "192.168.1.199"
     #define SERVER_PORT 48578
     #define TIMEOUT 5000
 
     // Serial bağlantı ayarları
     #define SerialBoud 9600
-
-    // seri monitör iletişimini açmak için SerialDebugger tanımlamasını
-    // yorum satırı yapın
-    #define SerialDebugger
-
-    #ifdef SerialDebugger
-        #define serialbegin() Serial.begin(SerialBoud);\
-        while(!Serial);
-        #define sserial(x) Serial.print(x)
-        #define sserialn(x) Serial.println(x)
-    #else
-        #define serialbegin() {}
-        #define serial(x) {}
-        #define serialn(x) {}
-    #endif
-
 
 #endif

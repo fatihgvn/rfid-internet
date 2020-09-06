@@ -3,6 +3,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <ESP8266WiFi.h>
+// #include <EEPROM.h>
 
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 MFRC522::MIFARE_Key key; 
@@ -12,6 +13,8 @@ WiFiClient client;
 byte nuidPICC[4];
 char key_id[20];
 String key_id_str="";
+
+int deviceId = 10;
 
 void printHex(byte *buffer, byte bufferSize);
 
@@ -24,25 +27,30 @@ void setup() {
   pinMode(buzzerPin,OUTPUT);
   pinMode(wifiLed,OUTPUT);
 
+
+
+  digitalWrite(yesilLed,HIGH);
+  digitalWrite(kirmiziLed,HIGH);
+  digitalWrite(buzzerPin,HIGH);
+  delay(1000);
   digitalWrite(yesilLed,LOW);
-  digitalWrite(kirmiziLed,LOW);
   digitalWrite(buzzerPin,LOW);
 
 
-    Serial.println();
-    Serial.println();
-    Serial.println("Baglanamaya Calisiyor...");
-    Serial.print("SSID : ");
-    Serial.println(STASSID);
+  Serial.println();
+  Serial.println();
+  Serial.println("Baglanamaya Calisiyor...");
+  Serial.print("SSID : ");
+  Serial.println(STASSID);
 
-   WiFi.mode(WIFI_STA);  // WIFIYE BAGLAN.
-   WiFi.begin(STASSID, STAPSK);
+  WiFi.mode(WIFI_STA);  // WIFIYE BAGLAN.
+  WiFi.begin(STASSID, STAPSK);
 
   while (WiFi.status() != WL_CONNECTED) {
-    digitalWrite(wifiLed,HIGH);
+    digitalWrite(kirmiziLed,HIGH);
     Serial.print(".");
     delay(200);
-    digitalWrite(wifiLed,LOW);
+    digitalWrite(kirmiziLed,LOW);
     delay(200);
   }
 
@@ -50,7 +58,7 @@ void setup() {
   Serial.println("WiFi Baglandi");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  digitalWrite(wifiLed,HIGH);
+  digitalWrite(kirmiziLed,LOW);
   
   rfid.PCD_Init(); // MFRC522 KUR VE YAPILANDIR.
 
@@ -59,19 +67,24 @@ void setup() {
     key.keyByte[i] = 0xFF;  // KARTLARIN ID SINI BOS OLARAK DOLDUR BUFFER TEMIZLE.
   }
 
-     
+  // deviceId = EEPROM.read(DEVICE_ID);
+  // if(deviceId==255){
+  //   client.connect(SERVER, SERVER_PORT);
+
+  //   if (client.connected()) {
+  //     client.print("getNewId");
+  //   }
+
+  //   while (client.available()) {
+  //     char ch = static_cast<char>(client.read());
+  //     EEPROM.write(DEVICE_ID, (int)ch);
+  //     deviceId = (int)ch;
+  //   }
+  // }
+  // Serial.print("Device id: ");
+  // Serial.println(deviceId, DEC);
 }
-//---------------------------------------SETUP_BITISI-----------------------------------------------------
-//*******************************************************************************************************
-//
-//
-//
-//
-//*******************************************************************************************************
-//------------------------------------------------------------------------------------------------------
 
-
-//-----------------------------------------SONSUZ_DONGU_BASLANGICI---------------------------------------
 void loop() {
 
   while(WiFi.status() != WL_CONNECTED)
@@ -89,27 +102,25 @@ void loop() {
      }
   }
 
-
-  
-  
- 
-
   // Yeni bir kart varmı bak
-  if ( ! rfid.PICC_IsNewCardPresent())
-  return;
+  if ( ! rfid.PICC_IsNewCardPresent()){
+    return;
+  }
 
   // Verify if the NUID has been readed
-  if ( ! rfid.PICC_ReadCardSerial())
-  return;
+  if ( ! rfid.PICC_ReadCardSerial()){
+    return;
+  }
     
-    for (byte i = 0; i < 4; i++) 
-    {
-      nuidPICC[i] = rfid.uid.uidByte[i];
-    }
-    printHex(rfid.uid.uidByte, rfid.uid.size);
-    Serial.println();
-    rfid.PICC_HaltA();
-    rfid.PCD_StopCrypto1();   
+  for (byte i = 0; i < 4; i++) 
+  {
+    nuidPICC[i] = rfid.uid.uidByte[i];
+    Serial.println(nuidPICC[i], HEX);
+  }
+  printHex(rfid.uid.uidByte, rfid.uid.size);
+  Serial.println();
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();   
 }
 
 
@@ -123,7 +134,15 @@ void printHex(byte *buffer, byte bufferSize)
   // Use WiFiClient class to create TCP connections
   if (!client.connect(SERVER, SERVER_PORT)) {
     Serial.println("Baglanilamadi...");
-    delay(250);
+    digitalWrite(kirmiziLed,HIGH);
+    digitalWrite(buzzerPin,HIGH);
+    delay(500);
+    digitalWrite(buzzerPin,LOW);
+    delay(50);
+    digitalWrite(buzzerPin,HIGH);
+    delay(100);
+    digitalWrite(buzzerPin,LOW);
+    digitalWrite(kirmiziLed,LOW);
     return;
   }
 
@@ -136,6 +155,7 @@ void printHex(byte *buffer, byte bufferSize)
     key_id_str += String(buffer[i],HEX);
     //key_id_str += key_id[i];
     }
+    key_id_str += '0';
     Serial.println();
     //client.println(RFID_KART_NUMBER_ID);
     key_id_str.toUpperCase();

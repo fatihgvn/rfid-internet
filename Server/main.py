@@ -10,40 +10,43 @@ __status__ = "Development"
 
 import sqlite3, sys, re, socket
 
+import requests
+
+# import mysql.connector
+
+# mydb = mysql.connector.connect(
+#     host="localhost",
+#     user="root",
+#     password="indeho",
+#     database="turnique"
+# )
+
+
+# # cihaz bilgilerini getir
+# def getDevice(id):
+#     mycursor = mydb.cursor(dictionary=True)
+#     mycursor.execute("SELECT * FROM Devices WHERE deviceId='"+str(id)+"'")
+#     myresult = mycursor.fetchone()
+
+#     return myresult
+
+# # Öğrenci bilgilerini getir
+# def getStudent(cardId):
+#     mycursor = mydb.cursor(dictionary=True)
+#     mycursor.execute("SELECT * FROM Students WHERE cardId='"+str(cardId)+"'")
+#     myresult = mycursor.fetchone()
+
+#     return myresult
 
 cardIdregex = re.compile("^[A-F0-9]+$")
-conn = sqlite3.connect('system.db')
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('', 48578)
 
 print('starting up on {} port {}'.format(*server_address))
 sock.bind(server_address)
 
-sock.listen(1)
+sock.listen(5)
 
-def runSql(sql):
-    c = conn.cursor()
-    c.execute(sql)
-    conn.commit()
-
-def addLogSql(log):
-    c = conn.cursor()
-    c.execute("INSERT INTO logs (logText) VALUES (?);", (log,))
-    conn.commit()
-
-def getCards(id):
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM cards WHERE cardId=?", (id,))
- 
-    rows = cur.fetchone()
-    conn.commit()
-
-    return rows
-
-# runSql('''
-# INSERT INTO cards (first_name, last_name, cardId, state) 
-# VALUES ("Furkan","Keleşoğlu", "22AF71CD", 1);
-# ''')
 try:
     while True:
         # Wait for a connection
@@ -54,24 +57,13 @@ try:
 
             # Receive the data in small chunks and retransmit it
             while True:
-                data = connection.recv(16)
+                data = connection.recv(18)
                 if data:
-                    userState = 0
-                    cardId = data.decode("utf-8").rstrip()
-                    print('received {!r}'.format(cardId))
-                    if(cardIdregex.match(cardId)):
-                        user = getCards(cardId)
-                        if(user):
-                            userState = user[4]
-                            proc = "geçiş izni verilmedi" if(user[4] == 0) else "geçiş izni verildi"
-                            addLogSql("[{0}] {1} {2} isimli kart sahibine {3}".format(cardId,user[1],user[2],proc))
-                        else:
-                            userState = 0
-                            addLogSql("[{0}] kar id'sine sahip kullanıcı bulunamadı".format(cardId))
-                    else:
-                        addLogSql("[{0}] kart id'si tanımlamanın dışarısında kaldığı için kabul edilmedi".format(cardId))
-                        
-                    connection.sendall("{0}".format(userState).encode())
+                    print("http://192.168.1.199/WebHook/readCard/"+str(data.decode("utf-8")))
+                    r = requests.get("http://192.168.1.199/WebHook/readCard/"+str(data.decode("utf-8")))
+                    print(r.text)
+                    userState = str(r.text)
+                    connection.send("{0}".format(userState).encode())
                 else:
                     break
         except Exception as ex:
